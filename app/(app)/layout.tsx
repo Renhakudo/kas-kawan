@@ -13,14 +13,16 @@ import {
   List,
   Menu,
   X,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
+import { AIChatBubble } from "@/components/chat/AIChatBubble";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/input", icon: PlusCircle, label: "Catat Transaksi" },
   { href: "/transactions", icon: List, label: "Riwayat" },
-  { href: "/assistant", icon: MessageSquare, label: "Asisten AI" },
+  { href: "/profile", icon: Settings, label: "Pengaturan" },
 ];
 
 export default function DashboardLayout({
@@ -255,6 +257,8 @@ export default function DashboardLayout({
       >
         {children}
       </main>
+
+      <AIChatBubble />
 
       <style>{`
         @media (max-width: 768px) {

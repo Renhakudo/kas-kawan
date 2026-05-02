@@ -9,7 +9,7 @@ function formatRupiah(amount: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
 }
 
-export function VoiceInput() {
+export function VoiceInput({ walletId }: { walletId?: string }) {
   const [recording, setRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [parsing, setParsing] = useState(false);
@@ -74,7 +74,7 @@ export function VoiceInput() {
     try {
       const res = await fetch("/api/transactions", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: parsed.type, amount: parsed.amount, category: parsed.category, description: parsed.description, transaction_date: new Date().toISOString() }),
+        body: JSON.stringify({ wallet_id: walletId, type: parsed.type, amount: parsed.amount, category: parsed.category, description: parsed.description, transaction_date: new Date().toISOString() }),
       });
       if (!res.ok) throw new Error("Gagal menyimpan");
       toast.success("Transaksi tersimpan! 🎉");

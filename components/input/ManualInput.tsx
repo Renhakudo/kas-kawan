@@ -20,7 +20,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export function ManualInput() {
+export function ManualInput({ walletId }: { walletId?: string }) {
   const [saving, setSaving] = useState(false);
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<FormData>({
@@ -42,6 +42,7 @@ export function ManualInput() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          wallet_id: walletId,
           type: data.type,
           amount,
           category: data.category,

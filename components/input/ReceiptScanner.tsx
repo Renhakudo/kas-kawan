@@ -10,7 +10,7 @@ function formatRupiah(amount: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
 }
 
-export function ReceiptScanner() {
+export function ReceiptScanner({ walletId }: { walletId?: string }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -65,6 +65,7 @@ export function ReceiptScanner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          wallet_id: walletId,
           type: parsed.type,
           amount: parsed.amount,
           category: parsed.category,
