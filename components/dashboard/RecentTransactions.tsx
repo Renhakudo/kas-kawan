@@ -8,6 +8,7 @@ interface RecentTransactionsProps {
   transactions: Transaction[];
   loading?: boolean;
   onDelete?: (id: string) => void;
+  periodLabel?: string;
 }
 
 function formatRupiah(amount: number) {
@@ -31,6 +32,7 @@ export function RecentTransactions({
   transactions,
   loading,
   onDelete,
+  periodLabel = "Terbaru",
 }: RecentTransactionsProps) {
   const handleDelete = async (id: string) => {
     if (!confirm("Hapus transaksi ini?")) return;
@@ -66,9 +68,9 @@ export function RecentTransactions({
     <div className="glass-card" style={{ padding: 24 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
-          <h3 style={{ fontWeight: 700, fontSize: 16 }}>Transaksi Terakhir</h3>
+          <h3 style={{ fontWeight: 700, fontSize: 16 }}>Transaksi — {periodLabel}</h3>
           <p style={{ fontSize: 13, color: "hsl(215 20% 55%)", marginTop: 4 }}>
-            {transactions.length} transaksi ditampilkan
+            {transactions.length} transaksi ditemukan
           </p>
         </div>
       </div>

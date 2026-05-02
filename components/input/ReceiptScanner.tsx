@@ -202,19 +202,54 @@ export function ReceiptScanner() {
             <h3 style={{ fontWeight: 700 }}>Hasil Pembacaan AI</h3>
           </div>
 
-          <div style={{ display: "grid", gap: 12, marginBottom: 20 }}>
-            {[
-              { label: "Tipe", value: parsed.type === "income" ? "Pemasukan" : "Pengeluaran" },
-              { label: "Nominal", value: formatRupiah(parsed.amount) },
-              { label: "Kategori", value: parsed.category },
-              { label: "Keterangan", value: parsed.description },
-              { label: "Tanggal", value: parsed.date },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid hsl(220 20% 18%)" }}>
-                <span style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>{label}</span>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>{value}</span>
-              </div>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Tipe</label>
+              <select 
+                value={parsed.type} 
+                onChange={(e) => setParsed({ ...parsed, type: e.target.value as "income" | "expense" })}
+                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+              >
+                <option value="income">Pemasukan</option>
+                <option value="expense">Pengeluaran</option>
+              </select>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Nominal</label>
+              <input 
+                type="number" 
+                value={parsed.amount} 
+                onChange={(e) => setParsed({ ...parsed, amount: Number(e.target.value) })}
+                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Kategori</label>
+              <input 
+                type="text" 
+                value={parsed.category} 
+                onChange={(e) => setParsed({ ...parsed, category: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Keterangan</label>
+              <input 
+                type="text" 
+                value={parsed.description} 
+                onChange={(e) => setParsed({ ...parsed, description: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Tanggal Transaksi</label>
+              <input 
+                type="date" 
+                value={parsed.date?.split("T")[0] || new Date().toISOString().split("T")[0]} 
+                onChange={(e) => setParsed({ ...parsed, date: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+              />
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: 10 }}>

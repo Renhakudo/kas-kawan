@@ -34,6 +34,10 @@ export async function POST(request: NextRequest) {
 
   const fmtRp = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n);
 
+  const recentTransactionsList = transactions.slice(0, 50).map(t => 
+    `- ${new Date(t.transaction_date).toLocaleDateString("id-ID")}: [${t.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}] ${t.category} - ${fmtRp(t.amount)}`
+  ).join("\n");
+
   const contextSummary = `
 Data keuangan pengguna (bulan ini, ${now.toLocaleDateString("id-ID", { month: "long", year: "numeric" })}):
 - Total Pemasukan: ${fmtRp(monthIncome)}
@@ -42,6 +46,9 @@ Data keuangan pengguna (bulan ini, ${now.toLocaleDateString("id-ID", { month: "l
 - Pengeluaran minggu ini: ${fmtRp(weekExpense)}
 - Pemasukan minggu ini: ${fmtRp(weekIncome)}
 - Jumlah transaksi bulan ini: ${transactions.length}
+
+Daftar Transaksi Terbaru (Bulan ini, Maksimal 50):
+${recentTransactionsList || "Belum ada transaksi."}
 `.trim();
 
   const GROK_API_KEY = process.env.GROK_API_KEY;

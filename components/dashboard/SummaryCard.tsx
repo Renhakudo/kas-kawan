@@ -8,6 +8,7 @@ interface SummaryCardProps {
   type: "income" | "expense" | "balance";
   change?: number;
   loading?: boolean;
+  periodLabel?: string;
 }
 
 function formatRupiah(amount: number) {
@@ -46,7 +47,7 @@ const config = {
   },
 };
 
-export function SummaryCard({ title, amount, type, loading }: SummaryCardProps) {
+export function SummaryCard({ title, amount, type, loading, periodLabel = "Bulan ini" }: SummaryCardProps) {
   const cfg = config[type];
   const Icon = cfg.icon;
 
@@ -103,7 +104,7 @@ export function SummaryCard({ title, amount, type, loading }: SummaryCardProps) 
             {formatRupiah(amount)}
           </p>
           <p style={{ fontSize: 12, color: "hsl(215 20% 45%)", marginTop: 6 }}>
-            Bulan ini
+            {periodLabel}
           </p>
         </div>
         <div

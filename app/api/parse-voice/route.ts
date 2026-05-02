@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -13,55 +14,121 @@ export async function POST(request: NextRequest) {
   }
 
   if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: "Gemini API key tidak dikonfigurasi" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Gemini API key tidak dikonfigurasi" },
+      { status: 500 }
+    );
   }
 
   const { transcript } = await request.json();
-  if (!transcript) {
-    return NextResponse.json({ error: "Tidak ada teks suara yang diterima" }, { status: 400 });
+
+  if (!transcript || transcript.trim().length < 3) {
+    return NextResponse.json(
+      { error: "Teks tidak valid" },
+      { status: 400 }
+    );
   }
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
-  const prompt = `Kamu adalah asisten pencatatan keuangan UMKM. Pengguna mengucapkan: "${transcript}"
+  const prompt = `
+Ekstrak transaksi keuangan dari kalimat berikut menjadi JSON VALID.
 
-Ekstrak informasi transaksi dari kalimat tersebut dan kembalikan HANYA JSON yang valid dengan format berikut:
+"${transcript}"
+
+Rules:
+- income jika ada kata: jual, terima, masuk, dapat
+- selain itu = expense
+- amount = angka bulat (tanpa titik/koma)
+- category bebas (contoh: Makanan, Transport, dll)
+- date format YYYY-MM-DD (hari ini: ${new Date().toISOString().split("T")[0]})
+
+Output WAJIB:
+- hanya JSON
+- tanpa markdown
+- tanpa penjelasan
+
+Contoh:
 {
-  "type": "income" atau "expense",
-  "amount": angka (jumlah dalam Rupiah, tanpa titik/koma),
-  "category": string (misal: "Makanan & Minuman", "Transport", "Penjualan", "Bahan Baku", "Jasa", "Lainnya"),
-  "description": string (ringkasan singkat dalam bahasa Indonesia),
-  "date": "YYYY-MM-DD" (hari ini: ${new Date().toISOString().split("T")[0]})
+  "type": "expense",
+  "amount": 5000,
+  "category": "Makanan",
+  "description": "Beli kopi",
+  "date": "${new Date().toISOString().split("T")[0]}"
 }
+`;
 
-Aturan:
-- Jika tidak ada kata "jual/terima/masuk/dapat", anggap "expense"
-- Jika ada "jual/terima/masuk/dapat/bayar ke kita", anggap "income"
-- Jangan sertakan markdown, backtick, atau teks lain. Hanya JSON murni.`;
+  async function callGemini() {
+    const res = await fetch(geminiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 1024, // ⬅️ penting: biar ga kepotong
+        },
+      }),
+    });
 
-  const res = await fetch(geminiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 256 },
-    }),
-  });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText);
+    }
 
-  if (!res.ok) {
-    return NextResponse.json({ error: "Gagal memproses suara dengan AI" }, { status: 500 });
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
   }
 
-  const data = await res.json();
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  let rawText = "";
+
+  // 🔁 retry 2x kalau kepotong
+  for (let i = 0; i < 2; i++) {
+    rawText = await callGemini();
+
+    console.log("RAW GEMINI:", rawText);
+
+    if (rawText.includes("}")) break;
+  }
 
   try {
-    const cleaned = rawText.replace(/```json\n?|\n?```/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+    // ambil JSON saja (buang teks sampah)
+    const match = rawText.match(/\{[\s\S]*\}/);
+
+    if (!match) {
+      throw new Error("JSON tidak ditemukan");
+    }
+
+    let parsed = JSON.parse(match[0]);
+
+    // normalize amount (kalau string)
+    if (typeof parsed.amount === "string") {
+      parsed.amount = parseInt(parsed.amount.replace(/\D/g, ""), 10);
+    }
+
+    // validasi final
+    if (
+      !parsed.type ||
+      !parsed.amount ||
+      !parsed.category ||
+      !parsed.description ||
+      !parsed.date
+    ) {
+      throw new Error("Field tidak lengkap");
+    }
+
     return NextResponse.json({ parsed });
-  } catch {
+
+  } catch (err) {
+    console.error("PARSE ERROR:", rawText);
+
     return NextResponse.json(
-      { error: "AI tidak dapat memproses kalimat ini. Coba input manual.", rawText },
+      {
+        error: "AI tidak dapat memproses kalimat ini",
+        rawText,
+      },
       { status: 422 }
     );
   }
