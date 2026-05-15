@@ -1,17 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Camera, Mic, PenLine, Wallet } from "lucide-react";
+import { useState } from "react";
+import { Camera, Mic, PenLine, Wallet, ChevronDown } from "lucide-react";
 import { ReceiptScanner } from "@/components/input/ReceiptScanner";
 import { VoiceInput } from "@/components/input/VoiceInput";
 import { ManualInput } from "@/components/input/ManualInput";
-import { createClient } from "@/lib/supabase/client";
-
-type WalletType = {
-  id: string;
-  name: string;
-  is_primary: boolean;
-};
+import { useWallet } from "@/components/WalletProvider";
 
 const tabs = [
   { id: "scan", label: "Scan Struk", icon: Camera },
@@ -23,163 +17,218 @@ type TabId = (typeof tabs)[number]["id"];
 
 export default function InputPage() {
   const [activeTab, setActiveTab] = useState<TabId>("manual");
-  const [wallets, setWallets] = useState<WalletType[]>([]);
-  const [selectedWalletId, setSelectedWalletId] = useState<string>("");
-  const supabase = createClient();
-
-  useEffect(() => {
-    const fetchWallets = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
-      if (data && data.length > 0) {
-        // Deduplicate wallets by id
-        const unique = data.filter(
-          (w: WalletType, i: number, arr: WalletType[]) =>
-            arr.findIndex((x) => x.id === w.id) === i
-        );
-        setWallets(unique);
-        const primary = unique.find((w: WalletType) => w.is_primary) || unique[0];
-        setSelectedWalletId(primary.id);
-      }
-    };
-    fetchWallets();
-  }, [supabase]);
+  const { wallets, selectedWalletId, setSelectedWalletId } = useWallet();
 
   return (
-    <div style={{ padding: "32px 28px", maxWidth: 720, margin: "0 auto" }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 800, letterSpacing: "-0.02em" }}>
+    <div style={{ maxWidth: "680px", margin: "0 auto", display: "flex", flexDirection: "column" }}>
+      
+      {/* ── HEADER HALAMAN ── */}
+      <div style={{ textAlign: "center", marginBottom: "24px" }}>
+        <h1 style={{ fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: "6px" }}>
           Catat Transaksi
         </h1>
-        <p style={{ color: "hsl(215 20% 55%)", marginTop: 6, fontSize: 14 }}>
-          Pilih metode pencatatan yang paling mudah untuk Anda
+        <p style={{ color: "var(--text-secondary)", fontSize: "clamp(13px, 3vw, 15px)", fontWeight: 500 }}>
+          Pilih metode pencatatan yang paling mudah untuk Anda.
         </p>
       </div>
 
-      {/* Wallet Selector — always visible */}
-      {wallets.length > 0 && (
-        <div
-          style={{
-            marginBottom: 20,
-            padding: "14px 16px",
-            background: "hsl(220 20% 10%)",
-            border: "1px solid hsl(220 20% 20%)",
-            borderRadius: 12,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: "hsl(217 91% 60% / 0.15)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Wallet size={18} color="hsl(217 91% 65%)" />
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 11, color: "hsl(215 20% 50%)", fontWeight: 600, marginBottom: 4, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-              Catat ke Dompet
-            </p>
-            {wallets.length === 1 ? (
-              <p style={{ fontSize: 15, fontWeight: 700, color: "white" }}>
-                {wallets[0].name}
-                {wallets[0].is_primary && (
-                  <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "hsl(217 91% 65%)", background: "hsl(217 91% 60% / 0.15)", padding: "2px 8px", borderRadius: 20 }}>
-                    Utama
-                  </span>
-                )}
+      <div className="glass-card animate-fade-in-up" style={{ padding: "clamp(16px, 5vw, 40px)", borderRadius: "clamp(16px, 4vw, 24px)", background: "var(--bg-card)" }}>
+        
+        {/* ── WALLET SELECTOR ── */}
+        {wallets.length > 0 && (
+          <div className="wallet-selector-box">
+            <div className="wallet-icon-box">
+              <Wallet size={20} color="var(--color-balance)" className="wallet-icon" />
+            </div>
+            
+            <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 800, marginBottom: "4px", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                Pilih Dompet Tujuan
               </p>
-            ) : (
-              <select
-                value={selectedWalletId}
-                onChange={(e) => setSelectedWalletId(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: "1px solid hsl(220 20% 25%)",
-                  background: "hsl(220 20% 14%)",
-                  color: "white",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  fontFamily: "inherit",
-                  outline: "none",
-                  cursor: "pointer",
-                }}
-              >
-                {wallets.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}{w.is_primary ? " (Utama)" : ""}
-                  </option>
-                ))}
-              </select>
-            )}
+              
+              {wallets.length === 1 ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <p style={{ fontSize: "15px", fontWeight: 800, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {wallets[0].name}
+                  </p>
+                  {wallets[0].is_primary && (
+                    <span style={{ flexShrink: 0, fontSize: "10px", fontWeight: 700, color: "var(--color-balance)", background: "var(--bg-card)", border: "1px solid var(--color-balance-border)", padding: "2px 6px", borderRadius: "100px" }}>
+                      Utama
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div style={{ position: "relative" }}>
+                  <select
+                    value={selectedWalletId}
+                    onChange={(e) => setSelectedWalletId(e.target.value)}
+                    className="wallet-select-input"
+                  >
+                    {wallets.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name} {w.is_primary ? " (Utama)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} color="var(--text-muted)" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          background: "hsl(220 20% 10%)",
-          border: "1px solid hsl(220 20% 18%)",
-          borderRadius: 12,
-          padding: 6,
-          marginBottom: 24,
-        }}
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            id={`tab-${tab.id}`}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 7,
-              padding: "10px 12px",
-              borderRadius: 8,
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              fontSize: 14,
-              fontWeight: activeTab === tab.id ? 600 : 500,
-              transition: "all 0.2s",
-              background:
-                activeTab === tab.id
-                  ? "linear-gradient(135deg, hsl(142 71% 45%), hsl(161 94% 30%))"
-                  : "transparent",
-              color: activeTab === tab.id ? "white" : "hsl(215 20% 55%)",
-              boxShadow: activeTab === tab.id ? "0 2px 12px hsl(142 71% 45% / 0.3)" : "none",
-            }}
-          >
-            <tab.icon size={16} />
-            {tab.label}
-          </button>
-        ))}
+        {/* ── TABS (SEGMENTED CONTROL) DENGAN CSS GRID ── */}
+        <div className="input-tabs-grid">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                id={`tab-${tab.id}`}
+                onClick={() => setActiveTab(tab.id)}
+                className={`input-tab-btn ${isActive ? "active" : ""}`}
+              >
+                <tab.icon size={18} strokeWidth={isActive ? 2.5 : 2} className="tab-icon" />
+                <span className="tab-label">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── KONTEN INPUT ── */}
+        <div style={{ minHeight: "300px", minWidth: 0 }}>
+          {activeTab === "scan" && <ReceiptScanner walletId={selectedWalletId} />}
+          {activeTab === "voice" && <VoiceInput walletId={selectedWalletId} />}
+          {activeTab === "manual" && <ManualInput walletId={selectedWalletId} />}
+        </div>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === "scan" && <ReceiptScanner walletId={selectedWalletId} />}
-      {activeTab === "voice" && <VoiceInput walletId={selectedWalletId} />}
-      {activeTab === "manual" && <ManualInput walletId={selectedWalletId} />}
+      {/* ── CSS KHUSUS RESPONSIVE ── */}
+      <style>{`
+        /* Wallet Selector Styles */
+        .wallet-selector-box {
+          margin-bottom: 24px;
+          padding: 16px;
+          background: var(--bg-elevated);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .wallet-icon-box {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          background: var(--color-balance-bg);
+          border: 1px solid var(--color-balance-border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .wallet-select-input {
+          width: 100%;
+          padding: 8px 32px 8px 12px;
+          border-radius: 10px;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
+          color: var(--text-primary);
+          font-size: 15px;
+          font-weight: 700;
+          font-family: inherit;
+          outline: none;
+          cursor: pointer;
+          appearance: none;
+          transition: border-color 0.2s;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        .wallet-select-input:focus {
+          border-color: var(--accent);
+        }
+
+        /* ── KUNCI PERBAIKAN: CSS GRID UNTUK TABS ── */
+        .input-tabs-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr)); /* Memaksa 3 kolom sama rata, anti meluber! */
+          gap: 8px;
+          background: var(--bg-elevated);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          padding: 8px;
+          margin-bottom: 32px;
+        }
+
+        .input-tab-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 12px 6px; /* Padding samping dikecilin biar text muat */
+          border-radius: 10px;
+          border: none;
+          cursor: pointer;
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          background: transparent;
+          color: var(--text-secondary);
+          width: 100%;
+        }
+        .input-tab-btn.active {
+          font-weight: 800;
+          background: var(--bg-card);
+          color: var(--accent);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* ── MOBILE RESPONSIVE ── */
+        @media (max-width: 480px) {
+          .wallet-selector-box {
+            padding: 12px;
+            gap: 12px;
+            border-radius: 14px;
+          }
+          .wallet-icon-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+          }
+          .wallet-select-input {
+            font-size: 14px;
+            padding: 6px 28px 6px 10px;
+          }
+          
+          .input-tabs-grid {
+            padding: 6px;
+            border-radius: 14px;
+            gap: 4px;
+            margin-bottom: 24px;
+          }
+          
+          /* Icon pindah ke atas teks di layar HP */
+          .input-tab-btn {
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px 2px;
+          }
+          .tab-icon {
+            width: 18px;
+            height: 18px;
+          }
+          .tab-label {
+            font-size: 11px;
+            text-align: center;
+            line-height: 1.2;
+            white-space: nowrap; /* Mencegah teks turun baris */
+          }
+        }
+      `}</style>
     </div>
   );
 }

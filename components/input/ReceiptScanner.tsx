@@ -97,55 +97,96 @@ export function ReceiptScanner({ walletId }: { walletId?: string }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Drop Zone */}
+      {/* Drop Zone & Take Picture */}
       {!preview ? (
-        <div
-          {...getRootProps()}
-          style={{
-            border: `2px dashed ${isDragActive ? "hsl(142 71% 45%)" : "hsl(220 20% 25%)"}`,
-            borderRadius: 16,
-            padding: "60px 24px",
-            textAlign: "center",
-            cursor: "pointer",
-            background: isDragActive ? "hsl(142 71% 45% / 0.05)" : "hsl(220 20% 10%)",
-            transition: "all 0.2s",
-          }}
-        >
-          <input {...getInputProps()} id="receipt-drop-input" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div
+            {...getRootProps()}
             style={{
-              width: 64,
-              height: 64,
+              border: `2px dashed ${isDragActive ? "var(--accent)" : "var(--border)"}`,
               borderRadius: 16,
-              background: "hsl(142 71% 45% / 0.12)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 16px",
+              padding: "40px 24px",
+              textAlign: "center",
+              cursor: "pointer",
+              background: isDragActive ? "var(--accent-muted)" : "var(--bg-elevated)",
+              transition: "all 0.2s",
             }}
           >
-            {isDragActive ? (
-              <Upload size={28} color="hsl(142 71% 55%)" />
-            ) : (
-              <Camera size={28} color="hsl(142 71% 55%)" />
-            )}
+            <input {...getInputProps()} id="receipt-drop-input" />
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 16,
+                background: "var(--color-balance-bg)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 16px",
+              }}
+            >
+              <Upload size={28} color="var(--color-balance)" />
+            </div>
+            <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 8, color: "var(--text-primary)" }}>
+              {isDragActive ? "Lepaskan gambar di sini" : "Upload Foto Struk"}
+            </p>
+            <p style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 16 }}>
+              Drag & drop, atau klik untuk pilih foto
+            </p>
+            <p style={{ color: "var(--text-muted)", fontSize: 12 }}>
+              JPG, PNG, WEBP hingga 10MB
+            </p>
           </div>
-          <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>
-            {isDragActive ? "Lepaskan gambar di sini" : "Upload Foto Struk"}
-          </p>
-          <p style={{ color: "hsl(215 20% 55%)", fontSize: 13, marginBottom: 16 }}>
-            Drag & drop, atau klik untuk pilih foto
-          </p>
-          <p style={{ color: "hsl(215 20% 45%)", fontSize: 12 }}>
-            JPG, PNG, WEBP hingga 10MB
-          </p>
+
+          <div style={{ position: "relative" }}>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                onDrop([f]);
+              }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                opacity: 0,
+                cursor: "pointer",
+                width: "100%",
+                height: "100%",
+                zIndex: 10
+              }}
+            />
+            <button
+              className="btn-primary"
+              style={{
+                width: "100%",
+                padding: "16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                fontSize: 15,
+                borderRadius: 16,
+                background: "var(--accent)",
+                color: "white",
+                border: "none",
+                fontWeight: 700,
+                boxShadow: "0 4px 14px var(--accent-glow)"
+              }}
+            >
+              <Camera size={20} />
+              Ambil Gambar Langsung
+            </button>
+          </div>
         </div>
       ) : (
         <div className="glass-card" style={{ padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
             <button
               onClick={handleReset}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "hsl(215 20% 50%)", padding: 4 }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4 }}
             >
               <X size={18} />
             </button>
@@ -165,11 +206,11 @@ export function ReceiptScanner({ walletId }: { walletId?: string }) {
             display: "flex",
             alignItems: "flex-start",
             gap: 10,
-            background: "hsl(0 72% 51% / 0.1)",
-            border: "1px solid hsl(0 72% 51% / 0.3)",
+            background: "var(--color-expense-bg)",
+            border: "1px solid var(--color-expense-border)",
             borderRadius: 10,
             padding: "12px 16px",
-            color: "hsl(0 72% 70%)",
+            color: "var(--color-expense)",
             fontSize: 14,
           }}
         >
@@ -199,56 +240,56 @@ export function ReceiptScanner({ walletId }: { walletId?: string }) {
       {parsed && (
         <div className="glass-card" style={{ padding: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-            <CheckCircle size={20} color="hsl(142 71% 55%)" />
-            <h3 style={{ fontWeight: 700 }}>Hasil Pembacaan AI</h3>
+            <CheckCircle size={20} color="var(--accent)" />
+            <h3 style={{ fontWeight: 700, color: "var(--text-primary)" }}>Hasil Pembacaan AI</h3>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Tipe</label>
+              <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Tipe</label>
               <select 
                 value={parsed.type} 
                 onChange={(e) => setParsed({ ...parsed, type: e.target.value as "income" | "expense" })}
-                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+                style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
               >
                 <option value="income">Pemasukan</option>
                 <option value="expense">Pengeluaran</option>
               </select>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Nominal</label>
-              <input 
-                type="number" 
-                value={parsed.amount} 
-                onChange={(e) => setParsed({ ...parsed, amount: Number(e.target.value) })}
-                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Kategori</label>
-              <input 
-                type="text" 
-                value={parsed.category} 
-                onChange={(e) => setParsed({ ...parsed, category: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Keterangan</label>
-              <input 
-                type="text" 
-                value={parsed.description} 
-                onChange={(e) => setParsed({ ...parsed, description: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Tanggal Transaksi</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Tanggal Transaksi</label>
               <input 
                 type="date" 
                 value={parsed.date?.split("T")[0] || new Date().toISOString().split("T")[0]} 
                 onChange={(e) => setParsed({ ...parsed, date: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+                style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Nominal</label>
+              <input 
+                type="number" 
+                value={parsed.amount} 
+                onChange={(e) => setParsed({ ...parsed, amount: Number(e.target.value) })}
+                style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Kategori</label>
+              <input 
+                type="text" 
+                value={parsed.category} 
+                onChange={(e) => setParsed({ ...parsed, category: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Keterangan</label>
+              <input 
+                type="text" 
+                value={parsed.description} 
+                onChange={(e) => setParsed({ ...parsed, description: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
               />
             </div>
           </div>

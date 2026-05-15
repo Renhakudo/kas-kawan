@@ -10,6 +10,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
+    return NextResponse.json({ error: "API key tidak dikonfigurasi" }, { status: 500 });
+  }
+
   const { message, history } = await request.json();
 
   // Fetch user's transaction summary for context
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
 
   const fmtRp = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n);
 
-  const recentTransactionsList = transactions.slice(0, 50).map(t => 
+  const recentTransactionsList = transactions.slice(0, 50).map(t =>
     `- ${new Date(t.transaction_date).toLocaleDateString("id-ID")}: [${t.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}] ${t.category} - ${fmtRp(t.amount)}`
   ).join("\n");
 
@@ -51,76 +56,54 @@ Daftar Transaksi Terbaru (Bulan ini, Maksimal 50):
 ${recentTransactionsList || "Belum ada transaksi."}
 `.trim();
 
-  const GROK_API_KEY = process.env.GROK_API_KEY;
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-  // Use Grok if available, fallback to Gemini
-  if (GROK_API_KEY) {
-    const systemPrompt = `Kamu adalah Kas Kawan, asisten keuangan yang ramah dan profesional untuk pelaku UMKM di Indonesia. 
+  const systemInstruction = `Kamu adalah Kas Kawan, asisten keuangan yang ramah dan profesional untuk pelaku UMKM di Indonesia.
 Berikan saran keuangan yang ringkas, actionable, dan menggembirakan berdasarkan data transaksi pengguna.
 Hindari istilah akuntansi yang kompleks. Gunakan bahasa Indonesia yang natural dan hangat.
 Gunakan angka Rupiah dalam format yang mudah dibaca (contoh: Rp 150.000).
 
 ${contextSummary}`;
 
-    const messages = [
-      ...(history || []),
-      { role: "user", content: message },
-    ];
+  // Build multi-turn conversation history for Gemini
+  type GeminiRole = "user" | "model";
+  interface GeminiPart { text: string; }
+  interface GeminiContent { role: GeminiRole; parts: GeminiPart[]; }
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${GROK_API_KEY}` },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
-        stream: false,
-        max_tokens: 512,
-      }),
-    });
+  const geminiHistory: GeminiContent[] = (history || []).map((msg: { role: string; content: string }) => ({
+    role: (msg.role === "assistant" ? "model" : "user") as GeminiRole,
+    parts: [{ text: msg.content }],
+  }));
 
-    if (res.ok) {
-      const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content || "Maaf, saya tidak dapat merespons saat ini.";
-      return NextResponse.json({ reply });
-    } else {
-      const err = await res.text();
-      console.error("Groq API Error:", res.status, err);
+  const contents: GeminiContent[] = [
+    ...geminiHistory,
+    { role: "user", parts: [{ text: message }] },
+  ];
+
+  try {
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemInstruction }] },
+          contents,
+          generationConfig: { temperature: 0.7, maxOutputTokens: 5000 },
+        }),
+      }
+    );
+
+    if (!geminiRes.ok) {
+      const err = await geminiRes.text();
+      console.error("Gemini API Error:", geminiRes.status, err);
+      return NextResponse.json({ error: "Asisten tidak dapat merespons saat ini" }, { status: 500 });
     }
+
+    const geminiData = await geminiRes.json();
+    const reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak dapat merespons saat ini.";
+    return NextResponse.json({ reply });
+
+  } catch (err) {
+    console.error("CHAT ERROR:", err);
+    return NextResponse.json({ error: "Terjadi kesalahan pada asisten" }, { status: 500 });
   }
-
-  // Fallback: Gemini
-  if (!GEMINI_API_KEY) {
-    return NextResponse.json({ error: "API key tidak dikonfigurasi" }, { status: 500 });
-  }
-
-  const systemPrompt = `Kamu adalah Kas Kawan, asisten keuangan yang ramah dan profesional untuk pelaku UMKM di Indonesia. 
-Berikan saran keuangan yang ringkas, actionable, dan menggembirakan berdasarkan data transaksi pengguna.
-Hindari istilah akuntansi yang kompleks. Gunakan bahasa Indonesia yang natural dan hangat.
-
-${contextSummary}
-
-Pengguna bertanya: ${message}`;
-
-  const geminiRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: systemPrompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
-      }),
-    }
-  );
-
-  if (!geminiRes.ok) {
-    const err = await geminiRes.text();
-    console.error("Gemini API Error:", geminiRes.status, err);
-    return NextResponse.json({ error: "Asisten tidak dapat merespons saat ini" }, { status: 500 });
-  }
-
-  const geminiData = await geminiRes.json();
-  const reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak dapat merespons saat ini.";
-  return NextResponse.json({ reply });
 }

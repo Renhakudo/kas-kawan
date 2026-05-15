@@ -86,8 +86,8 @@ export function VoiceInput({ walletId }: { walletId?: string }) {
     return (
       <div className="glass-card" style={{ padding: 32, textAlign: "center" }}>
         <p style={{ fontSize: 32, marginBottom: 12 }}>🎙️</p>
-        <h3 style={{ fontWeight: 700, marginBottom: 8 }}>Browser Tidak Mendukung</h3>
-        <p style={{ color: "hsl(215 20% 55%)", fontSize: 14 }}>Gunakan Chrome atau Edge terbaru.</p>
+        <h3 style={{ fontWeight: 700, marginBottom: 8, color: "var(--text-primary)" }}>Browser Tidak Mendukung</h3>
+        <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Gunakan Chrome atau Edge terbaru.</p>
       </div>
     );
   }
@@ -100,32 +100,32 @@ export function VoiceInput({ walletId }: { walletId?: string }) {
           onClick={recording ? stopRecording : startRecording}
           style={{
             width: 96, height: 96, borderRadius: "50%",
-            background: recording ? "linear-gradient(135deg, hsl(0 72% 51%), hsl(0 72% 40%))" : "linear-gradient(135deg, hsl(142 71% 45%), hsl(161 94% 30%))",
+            background: recording ? "linear-gradient(135deg, var(--color-expense), var(--color-expense-border))" : "linear-gradient(135deg, var(--accent), var(--accent-dark))",
             border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 20px",
-            boxShadow: recording ? "0 0 0 12px hsl(0 72% 51% / 0.15), 0 8px 32px hsl(0 72% 51% / 0.4)" : "0 8px 32px hsl(142 71% 45% / 0.4)",
+            boxShadow: recording ? "0 0 0 12px var(--color-expense-bg), 0 8px 32px var(--color-expense-border)" : "0 8px 32px var(--accent-glow)",
             transition: "all 0.3s ease",
           }}
         >
           {recording ? <MicOff size={40} color="white" /> : <Mic size={40} color="white" />}
         </button>
-        <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>
+        <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 8, color: "var(--text-primary)" }}>
           {recording ? "🔴 Sedang Merekam..." : "Tekan untuk bicara"}
         </p>
-        <p style={{ color: "hsl(215 20% 55%)", fontSize: 13 }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: 13 }}>
           {recording ? "Ucapkan transaksi, klik lagi untuk berhenti" : 'Contoh: "Beli bahan baku 250 ribu"'}
         </p>
       </div>
 
       {transcript && (
         <div className="glass-card" style={{ padding: 20 }}>
-          <p style={{ fontSize: 13, color: "hsl(215 20% 55%)", marginBottom: 6, fontWeight: 600 }}>HASIL REKAMAN:</p>
-          <p style={{ fontSize: 16, fontStyle: "italic" }}>"{transcript}"</p>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 6, fontWeight: 600 }}>HASIL REKAMAN:</p>
+          <p style={{ fontSize: 16, fontStyle: "italic", color: "var(--text-primary)" }}>"{transcript}"</p>
         </div>
       )}
 
       {error && (
-        <div style={{ display: "flex", gap: 10, background: "hsl(0 72% 51% / 0.1)", border: "1px solid hsl(0 72% 51% / 0.3)", borderRadius: 10, padding: "12px 16px", color: "hsl(0 72% 70%)", fontSize: 14 }}>
+        <div style={{ display: "flex", gap: 10, background: "var(--color-expense-bg)", border: "1px solid var(--color-expense-border)", borderRadius: 10, padding: "12px 16px", color: "var(--color-expense)", fontSize: 14 }}>
           <AlertCircle size={18} style={{ flexShrink: 0 }} />{error}
         </div>
       )}
@@ -140,46 +140,46 @@ export function VoiceInput({ walletId }: { walletId?: string }) {
       {parsed && (
         <div className="glass-card" style={{ padding: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-            <CheckCircle size={20} color="hsl(142 71% 55%)" />
-            <h3 style={{ fontWeight: 700 }}>Hasil AI</h3>
+            <CheckCircle size={20} color="var(--accent)" />
+            <h3 style={{ fontWeight: 700, color: "var(--text-primary)" }}>Hasil AI</h3>
           </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Tipe</label>
+                <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Tipe</label>
                 <select 
                   value={parsed.type} 
                   onChange={(e) => setParsed({ ...parsed, type: e.target.value as "income" | "expense" })}
-                  style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+                  style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
                 >
                   <option value="income">Pemasukan</option>
                   <option value="expense">Pengeluaran</option>
                 </select>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Nominal</label>
+                <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Nominal</label>
                 <input 
                   type="number" 
                   value={parsed.amount} 
                   onChange={(e) => setParsed({ ...parsed, amount: Number(e.target.value) })}
-                  style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+                  style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
                 />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Kategori</label>
+                <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Kategori</label>
                 <input 
                   type="text" 
                   value={parsed.category} 
                   onChange={(e) => setParsed({ ...parsed, category: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+                  style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
                 />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <label style={{ fontSize: 13, color: "hsl(215 20% 55%)" }}>Keterangan</label>
+                <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>Keterangan</label>
                 <input 
                   type="text" 
                   value={parsed.description} 
                   onChange={(e) => setParsed({ ...parsed, description: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", background: "hsl(220 20% 10%)", border: "1px solid hsl(220 20% 18%)", borderRadius: 8, color: "white", fontFamily: "inherit" }}
+                  style={{ width: "100%", padding: "8px 12px", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-primary)", fontFamily: "inherit" }}
                 />
               </div>
             </div>

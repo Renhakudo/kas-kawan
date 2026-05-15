@@ -62,7 +62,7 @@ export function AIChatBubble() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button (Solid Brand Color) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -72,16 +72,16 @@ export function AIChatBubble() {
           width: 56,
           height: 56,
           borderRadius: 28,
-          background: "linear-gradient(135deg, hsl(270 91% 65%), hsl(217 91% 60%))",
+          background: "var(--accent)", // 1 Warna Solid
           color: "white",
           border: "none",
-          boxShadow: "0 4px 16px hsl(270 91% 65% / 0.4)",
+          boxShadow: "0 8px 24px var(--accent-glow)", // Glow menyesuaikan warna accent
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
           zIndex: 9999,
-          transition: "transform 0.2s",
+          transition: "transform 0.2s, box-shadow 0.2s",
           transform: isOpen ? "scale(0)" : "scale(1)",
         }}
       >
@@ -98,79 +98,104 @@ export function AIChatBubble() {
           height: 600,
           maxHeight: "calc(100vh - 100px)",
           maxWidth: "calc(100vw - 48px)",
-          background: "hsl(220 20% 8%)",
-          borderRadius: 20,
-          boxShadow: "0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px hsl(220 20% 14%)",
+          background: "var(--bg-page)", // Mengikuti background tema
+          borderRadius: 24, // Lebih melengkung ala modern UI
+          boxShadow: "0 24px 48px rgba(0,0,0,0.2), 0 0 0 1px var(--border)",
           display: "flex",
           flexDirection: "column",
           transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           zIndex: 9999,
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? "auto" : "none",
+          overflow: "hidden", // Memastikan rounded corners terjaga
         }}
       >
         {/* Header */}
-        <div style={{ padding: "16px", borderBottom: "1px solid hsl(220 20% 14%)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, hsl(270 91% 65%), hsl(217 91% 60%))", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Bot size={20} color="white" />
+        <div style={{ padding: "16px 20px", background: "var(--bg-card)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--accent-muted)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Bot size={20} color="var(--accent)" />
             </div>
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Kas Kawan AI</h3>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "hsl(142 71% 55%)" }} />
-                <span style={{ fontSize: 11, color: "hsl(142 71% 60%)" }}>Online</span>
+              <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>KasKawan AI</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", animation: "pulse-glow 2s infinite" }} />
+                <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 600 }}>Siap membantu</span>
               </div>
             </div>
           </div>
-          <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: "hsl(215 20% 65%)", cursor: "pointer" }}>
-            <X size={20} />
+          <button 
+            onClick={() => setIsOpen(false)} 
+            style={{ 
+              width: 32, height: 32, borderRadius: 8, background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" 
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-card-hover)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-elevated)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+          >
+            <X size={18} />
           </button>
         </div>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 16 }}>
           {messages.map((msg, i) => (
             <div
               key={i}
               style={{
                 display: "flex",
-                gap: 8,
+                gap: 12,
                 alignItems: "flex-start",
                 flexDirection: msg.role === "user" ? "row-reverse" : "row",
+                animation: "fadeInUp 0.3s ease forwards",
               }}
             >
+              {/* Avatar */}
               <div style={{
-                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                background: msg.role === "user" ? "linear-gradient(135deg, hsl(142 71% 45%), hsl(161 94% 30%))" : "linear-gradient(135deg, hsl(270 91% 65%), hsl(217 91% 60%))",
+                width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+                background: msg.role === "user" ? "var(--accent)" : "var(--bg-card)",
+                border: msg.role === "user" ? "none" : "1px solid var(--border)",
                 display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: msg.role === "user" ? "0 4px 12px var(--accent-glow)" : "var(--shadow-card)",
               }}>
-                {msg.role === "user" ? <User size={14} color="white" /> : <Bot size={14} color="white" />}
+                {msg.role === "user" ? <User size={16} color="white" /> : <Bot size={16} color="var(--accent)" />}
               </div>
 
+              {/* Chat Bubble */}
               <div style={{
                 maxWidth: "75%",
-                padding: "10px 14px",
-                borderRadius: msg.role === "user" ? "12px 4px 12px 12px" : "4px 12px 12px 12px",
-                background: msg.role === "user" ? "linear-gradient(135deg, hsl(142 71% 45%), hsl(161 94% 30%))" : "hsl(220 20% 12%)",
-                border: msg.role === "user" ? "none" : "1px solid hsl(220 20% 20%)",
-                fontSize: 13,
-                lineHeight: 1.5,
-                color: msg.role === "user" ? "white" : "hsl(210 40% 92%)",
+                padding: "12px 16px",
+                borderRadius: msg.role === "user" ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
+                background: msg.role === "user" ? "var(--accent)" : "var(--bg-elevated)",
+                border: msg.role === "user" ? "none" : "1px solid var(--border)",
+                fontSize: 14,
+                lineHeight: 1.6,
+                color: msg.role === "user" ? "white" : "var(--text-primary)",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
+                boxShadow: msg.role === "user" ? "0 4px 16px var(--accent-glow)" : "none",
               }}>
                 {msg.content}
+                <p style={{ 
+                  fontSize: 11, 
+                  opacity: 0.7, 
+                  marginTop: 8, 
+                  textAlign: msg.role === "user" ? "right" : "left",
+                  fontWeight: 500 
+                }}>
+                  {msg.timestamp.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                </p>
               </div>
             </div>
           ))}
+
           {loading && (
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, hsl(270 91% 65%), hsl(217 91% 60%))", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Bot size={14} color="white" />
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start", animation: "fadeIn 0.3s ease forwards" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: "var(--bg-card)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-card)" }}>
+                <Bot size={16} color="var(--accent)" />
               </div>
-              <div style={{ padding: "10px 14px", borderRadius: "4px 12px 12px 12px", background: "hsl(220 20% 12%)", border: "1px solid hsl(220 20% 20%)", display: "flex", alignItems: "center", gap: 8 }}>
-                <Loader2 size={14} color="hsl(270 91% 65%)" style={{ animation: "spin 1s linear infinite" }} />
+              <div style={{ padding: "12px 16px", borderRadius: "4px 16px 16px 16px", background: "var(--bg-elevated)", border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
+                <Loader2 size={16} color="var(--accent)" style={{ animation: "spin 1s linear infinite" }} />
+                <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>Sedang mengetik...</span>
               </div>
             </div>
           )}
@@ -179,16 +204,19 @@ export function AIChatBubble() {
 
         {/* Quick Prompts */}
         {messages.length <= 1 && (
-          <div style={{ padding: "8px 16px 0", display: "flex", gap: 6, overflowX: "auto", flexWrap: "nowrap" }}>
+          <div className="hidden-scrollbar" style={{ padding: "8px 20px 0", display: "flex", gap: 8, overflowX: "auto", flexWrap: "nowrap" }}>
             {QUICK_PROMPTS.map((p) => (
               <button
                 key={p}
                 onClick={() => sendMessage(p)}
                 style={{
-                  padding: "6px 12px", borderRadius: 16, border: "1px solid hsl(220 20% 22%)",
-                  background: "hsl(220 20% 11%)", color: "hsl(215 20% 65%)", fontSize: 11,
+                  padding: "8px 14px", borderRadius: 100, border: "1px solid var(--border)",
+                  background: "var(--bg-card)", color: "var(--text-secondary)", fontSize: 12, fontWeight: 600,
                   cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
+                  transition: "all 0.2s ease",
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.background = "var(--accent-muted)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "var(--bg-card)"; }}
               >
                 {p}
               </button>
@@ -196,40 +224,52 @@ export function AIChatBubble() {
           </div>
         )}
 
-        {/* Input */}
-        <div style={{ padding: "12px 16px 16px" }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", background: "hsl(220 20% 12%)", border: "1px solid hsl(220 20% 20%)", borderRadius: 12, padding: "4px 6px 4px 12px" }}>
-            <Sparkles size={14} color="hsl(270 91% 65%)" style={{ flexShrink: 0 }} />
+        {/* Input Area */}
+        <div style={{ padding: "16px 20px", background: "var(--bg-page)", borderTop: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 16, padding: "6px 6px 6px 16px", transition: "border-color 0.2s" }}>
+            <Sparkles size={18} color="var(--accent)" style={{ flexShrink: 0 }} />
             <input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-              placeholder="Tanya Kas Kawan..."
+              placeholder="Tanya asisten AI..."
               disabled={loading}
               style={{
                 flex: 1, background: "none", border: "none", outline: "none",
-                color: "hsl(210 40% 96%)", fontSize: 13, fontFamily: "inherit", padding: "8px 0",
+                color: "var(--text-primary)", fontSize: 14, fontFamily: "inherit", padding: "10px 0",
               }}
             />
             <button
               onClick={() => sendMessage()}
               disabled={!input.trim() || loading}
               style={{
-                width: 32, height: 32, borderRadius: 8, border: "none", cursor: "pointer",
-                background: input.trim() && !loading ? "linear-gradient(135deg, hsl(270 91% 65%), hsl(217 91% 60%))" : "hsl(220 20% 18%)",
+                width: 36, height: 36, borderRadius: 12, cursor: input.trim() && !loading ? "pointer" : "not-allowed",
+                background: input.trim() && !loading ? "var(--accent)" : "var(--bg-card)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
+                flexShrink: 0, transition: "all 0.2s ease",
+                border: input.trim() && !loading ? "none" : "1px solid var(--border)",
+                boxShadow: input.trim() && !loading ? "0 4px 12px var(--accent-glow)" : "none",
               }}
             >
-              <Send size={14} color={input.trim() && !loading ? "white" : "hsl(215 20% 45%)"} />
+              <Send size={16} color={input.trim() && !loading ? "white" : "var(--text-muted)"} style={{ transform: input.trim() && !loading ? "translateX(1px) translateY(-1px)" : "none", transition: "transform 0.2s" }} />
             </button>
           </div>
         </div>
       </div>
-      
+
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-glow { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--color-income-border); } 50% { opacity: 0.7; box-shadow: 0 0 0 4px transparent; } }
+        
+        .hidden-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hidden-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
       `}</style>
     </>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Transaction } from "@/lib/types";
-import { ArrowUpRight, ArrowDownRight, Trash2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Trash2, List } from "lucide-react";
 import { toast } from "sonner";
 
 interface RecentTransactionsProps {
@@ -25,7 +25,24 @@ function formatDate(dateStr: string) {
     day: "numeric",
     month: "short",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(new Date(dateStr));
+}
+
+const CATEGORY_EMOJIS: Record<string, string> = {
+  "Makanan": "🍽️", "Minuman": "☕", "Transportasi": "🚗", "Belanja": "🛍️",
+  "Hiburan": "🎬", "Kesehatan": "💊", "Pendidikan": "📚", "Tagihan": "📄",
+  "Gaji": "💼", "Penjualan": "💰", "Investasi": "📈", "Lainnya": "📦",
+  "Food": "🍽️", "Transport": "🚗", "Shopping": "🛍️", "Entertainment": "🎬",
+  "Health": "💊", "Education": "📚", "Bills": "📄", "Salary": "💼",
+};
+
+function getCategoryEmoji(category: string): string {
+  for (const [key, emoji] of Object.entries(CATEGORY_EMOJIS)) {
+    if (category.toLowerCase().includes(key.toLowerCase())) return emoji;
+  }
+  return "📦";
 }
 
 export function RecentTransactions({
@@ -48,16 +65,25 @@ export function RecentTransactions({
 
   if (loading) {
     return (
-      <div className="glass-card" style={{ padding: 24 }}>
-        <div className="skeleton" style={{ height: 20, width: "50%", marginBottom: 20 }} />
+      <div className="glass-card" style={{ padding: "32px", borderRadius: "24px", height: "100%" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "32px" }}>
+          <div className="skeleton" style={{ height: "56px", width: "56px", borderRadius: "16px" }} />
+          <div>
+            <div className="skeleton" style={{ height: "20px", width: "160px", marginBottom: "8px", borderRadius: "4px" }} />
+            <div className="skeleton" style={{ height: "14px", width: "100px", borderRadius: "4px" }} />
+          </div>
+        </div>
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
-            <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0 }} />
+          <div key={i} style={{ display: "flex", gap: "16px", padding: "16px 0", borderBottom: i < 4 ? "1px solid var(--border)" : "none", alignItems: "center" }}>
+            <div className="skeleton" style={{ width: "48px", height: "48px", borderRadius: "14px", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div className="skeleton" style={{ height: 14, width: "60%", marginBottom: 6 }} />
-              <div className="skeleton" style={{ height: 12, width: "40%" }} />
+              <div className="skeleton" style={{ height: "16px", width: "40%", marginBottom: "8px", borderRadius: "4px" }} />
+              <div className="skeleton" style={{ height: "12px", width: "25%", borderRadius: "4px" }} />
             </div>
-            <div className="skeleton" style={{ height: 18, width: 80 }} />
+            <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+              <div className="skeleton" style={{ height: "18px", width: "100px", marginBottom: "8px", borderRadius: "4px" }} />
+              <div className="skeleton" style={{ height: "22px", width: "60px", borderRadius: "100px" }} />
+            </div>
           </div>
         ))}
       </div>
@@ -65,121 +91,178 @@ export function RecentTransactions({
   }
 
   return (
-    <div className="glass-card" style={{ padding: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+    // Tambahkan height: "100%" agar tingginya flex mengikuti container grid secara otomatis
+    <div className="glass-card" style={{ padding: "clamp(16px, 4vw, 24px)", borderRadius: "24px", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, height: "100%" }}>
+      
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px", flexShrink: 0 }}>
+        <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: "var(--bg-elevated)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-card)", flexShrink: 0 }}>
+          <List size={28} color="var(--accent)" />
+        </div>
         <div>
-          <h3 style={{ fontWeight: 700, fontSize: 16 }}>Transaksi — {periodLabel}</h3>
-          <p style={{ fontSize: 13, color: "hsl(215 20% 55%)", marginTop: 4 }}>
-            {transactions.length} transaksi ditemukan
+          <h3 style={{ fontWeight: 900, fontSize: "20px", color: "var(--text-primary)", letterSpacing: "-0.02em", marginBottom: "4px" }}>
+            Riwayat Transaksi
+          </h3>
+          <p style={{ fontSize: "14px", color: "var(--text-secondary)", fontWeight: 500 }}>
+            {transactions.length} transaksi · {periodLabel}
           </p>
         </div>
       </div>
 
       {transactions.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 0", color: "hsl(215 20% 50%)" }}>
-          <p style={{ fontSize: 32, marginBottom: 8 }}>📊</p>
-          <p style={{ fontWeight: 600 }}>Belum ada transaksi</p>
-          <p style={{ fontSize: 13, marginTop: 4 }}>Mulai catat pemasukan atau pengeluaran pertama Anda</p>
+        // Modern Empty State
+        <div style={{ flex: 1, minHeight: "280px", padding: "48px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", background: "var(--bg-elevated)", borderRadius: "16px", border: "1px dashed var(--border)" }}>
+          <div style={{ width: "56px", height: "56px", background: "var(--bg-card)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}>
+            <List size={24} color="var(--text-muted)" />
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ color: "var(--text-primary)", fontSize: "16px", fontWeight: 800, marginBottom: "4px" }}>Belum ada transaksi</p>
+            <p style={{ color: "var(--text-secondary)", fontSize: "14px" }}>Mulai catat pemasukan atau pengeluaran pertama Anda.</p>
+          </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {transactions.map((t) => (
+        // LIST TRANSAKSI - Container ini dikasih Flex 1, MaxHeight, dan OverflowY
+        <div 
+          className="txn-scroll-container"
+          style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            overflowY: "auto", 
+            maxHeight: "360px", // Memaksa sejajar dengan tinggi chart (~280px chart + sum header)
+            paddingRight: "8px", 
+            marginRight: "-8px" // Kompensasi padding scrollbar
+          }}
+        >
+          {transactions.map((t, idx) => (
             <div
               key={t.id}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
-                padding: "12px 8px",
-                borderRadius: 10,
-                transition: "background 0.15s",
+                gap: "16px",
+                padding: "16px",
+                borderRadius: "16px",
+                transition: "all 0.2s ease",
+                borderBottom: idx < transactions.length - 1 ? "1px solid var(--border)" : "1px solid transparent",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "hsl(220 20% 13%)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = "var(--bg-elevated)";
+                e.currentTarget.style.borderColor = "transparent";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.borderColor = idx < transactions.length - 1 ? "var(--border)" : "transparent";
+              }}
             >
-              {/* Icon */}
+              {/* Category icon */}
               <div
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  background:
-                    t.type === "income"
-                      ? "hsl(142 71% 45% / 0.15)"
-                      : "hsl(0 72% 51% / 0.15)",
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "14px",
+                  background: t.type === "income" ? "var(--color-income-bg)" : "var(--color-expense-bg)",
+                  border: `1px solid ${t.type === "income" ? "var(--color-income-border)" : "var(--color-expense-border)"}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
+                  fontSize: "22px",
+                  boxShadow: "var(--shadow-card)"
                 }}
               >
-                {t.type === "income" ? (
-                  <ArrowUpRight size={20} color="hsl(142 71% 55%)" />
-                ) : (
-                  <ArrowDownRight size={20} color="hsl(0 72% 65%)" />
-                )}
+                {getCategoryEmoji(t.category)}
               </div>
 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p
-                  style={{
-                    fontWeight: 600,
-                    fontSize: 14,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
+                <p style={{ fontWeight: 800, fontSize: "15px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--text-primary)", marginBottom: "4px" }}>
                   {t.category}
                 </p>
-                <p style={{ fontSize: 12, color: "hsl(215 20% 50%)", marginTop: 2 }}>
-                  {t.description ? `${t.description} • ` : ""}
-                  {formatDate(t.transaction_date)}
+                <p style={{ fontSize: "13px", color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: 500 }}>
+                  {t.description ? `${t.description} · ` : ""}{formatDate(t.transaction_date)}
                 </p>
               </div>
 
-              {/* Amount */}
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <p
+              {/* Amount & Badge */}
+              <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                <p style={{ fontWeight: 900, fontSize: "16px", letterSpacing: "-0.01em", color: t.type === "income" ? "var(--color-income)" : "var(--color-expense)", marginBottom: "6px" }}>
+                  {t.type === "income" ? "+" : "-"}{formatRupiah(t.amount)}
+                </p>
+                <div
                   style={{
-                    fontWeight: 700,
-                    fontSize: 14,
-                    color: t.type === "income" ? "hsl(142 71% 55%)" : "hsl(0 72% 65%)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "4px 10px",
+                    borderRadius: "100px",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    letterSpacing: "0.5px",
+                    textTransform: "uppercase",
+                    background: t.type === "income" ? "var(--color-income-bg)" : "var(--color-expense-bg)",
+                    color: t.type === "income" ? "var(--color-income)" : "var(--color-expense)",
+                    border: `1px solid ${t.type === "income" ? "var(--color-income-border)" : "var(--color-expense-border)"}`,
                   }}
                 >
-                  {t.type === "income" ? "+" : "-"}
-                  {formatRupiah(t.amount)}
-                </p>
-                <span className={t.type === "income" ? "badge-income" : "badge-expense"}>
+                  {t.type === "income" ? <ArrowUpRight size={12} strokeWidth={3} /> : <ArrowDownRight size={12} strokeWidth={3} />}
                   {t.type === "income" ? "Masuk" : "Keluar"}
-                </span>
+                </div>
               </div>
 
-              {/* Delete */}
+              {/* Delete Button */}
               <button
                 onClick={() => handleDelete(t.id)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "hsl(215 20% 40%)",
-                  padding: 4,
-                  borderRadius: 6,
-                  display: "flex",
-                  transition: "color 0.15s",
+                style={{ 
+                  background: "var(--bg-card)", 
+                  border: "1px solid var(--border)", 
+                  cursor: "pointer", 
+                  color: "var(--text-muted)", 
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px", 
+                  display: "flex", 
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s ease", 
                   flexShrink: 0,
+                  marginLeft: "8px"
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "hsl(0 72% 65%)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "hsl(215 20% 40%)")}
+                onMouseEnter={e => { 
+                  e.currentTarget.style.color = "var(--color-danger)"; 
+                  e.currentTarget.style.background = "var(--color-expense-bg)"; 
+                  e.currentTarget.style.borderColor = "var(--color-expense-border)"; 
+                }}
+                onMouseLeave={e => { 
+                  e.currentTarget.style.color = "var(--text-muted)"; 
+                  e.currentTarget.style.background = "var(--bg-card)"; 
+                  e.currentTarget.style.borderColor = "var(--border)"; 
+                }}
                 title="Hapus transaksi"
               >
-                <Trash2 size={15} />
+                <Trash2 size={16} />
               </button>
             </div>
           ))}
         </div>
       )}
+
+      {/* Custom Scrollbar CSS for Transactions */}
+      <style>{`
+        .txn-scroll-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        .txn-scroll-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .txn-scroll-container::-webkit-scrollbar-thumb {
+          background-color: var(--border);
+          border-radius: 10px;
+        }
+        .txn-scroll-container::-webkit-scrollbar-thumb:hover {
+          background-color: var(--text-muted);
+        }
+      `}</style>
     </div>
   );
 }

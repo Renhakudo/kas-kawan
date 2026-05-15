@@ -4,23 +4,41 @@ import { useEffect, useState, useCallback } from "react";
 import type { Transaction } from "@/lib/types";
 import { ArrowUpRight, ArrowDownRight, Trash2, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
+import { useWallet } from "@/components/WalletProvider";
 
 function formatRupiah(amount: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
 }
 
 function formatDate(dateStr: string) {
-  return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(new Date(dateStr));
+  return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(dateStr));
+}
+
+const CATEGORY_EMOJIS: Record<string, string> = {
+  "Makanan": "🍽️", "Minuman": "☕", "Transportasi": "🚗", "Belanja": "🛍️",
+  "Hiburan": "🎬", "Kesehatan": "💊", "Pendidikan": "📚", "Tagihan": "📄",
+  "Gaji": "💼", "Penjualan": "💰", "Investasi": "📈", "Lainnya": "📦",
+  "Food": "🍽️", "Transport": "🚗", "Shopping": "🛍️", "Entertainment": "🎬",
+  "Health": "💊", "Education": "📚", "Bills": "📄", "Salary": "💼",
+};
+
+function getCategoryEmoji(category: string): string {
+  for (const [key, emoji] of Object.entries(CATEGORY_EMOJIS)) {
+    if (category.toLowerCase().includes(key.toLowerCase())) return emoji;
+  }
+  return "📦";
 }
 
 export default function TransactionsPage() {
+  const { selectedWalletId, loadingWallets } = useWallet();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
 
-  const fetchTransactions = useCallback(async () => {
-    const res = await fetch("/api/transactions");
+  const fetchTransactions = useCallback(async (walletId: string) => {
+    setLoading(true);
+    const res = await fetch(walletId ? `/api/transactions?wallet_id=${walletId}` : "/api/transactions");
     if (res.ok) {
       const { transactions } = await res.json();
       setTransactions(transactions || []);
@@ -28,7 +46,10 @@ export default function TransactionsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
+  useEffect(() => {
+    if (loadingWallets) return;
+    fetchTransactions(selectedWalletId);
+  }, [fetchTransactions, selectedWalletId, loadingWallets]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Hapus transaksi ini?")) return;
@@ -51,122 +72,213 @@ export default function TransactionsPage() {
   const totalExpense = filtered.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
 
   return (
-    <div style={{ padding: "32px 28px", maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 800, letterSpacing: "-0.02em" }}>Riwayat Transaksi</h1>
-        <p style={{ color: "hsl(215 20% 55%)", marginTop: 6, fontSize: 14 }}>{transactions.length} total transaksi</p>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)" }}>
+      {/* ── HEADER ── */}
+      <div style={{ marginBottom: "24px", flexShrink: 0 }}>
+        <h1 style={{ fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: "4px" }}>Riwayat Transaksi</h1>
+        <p style={{ color: "var(--text-secondary)", fontSize: "14px", fontWeight: 500 }}>Menampilkan {filtered.length} transaksi</p>
       </div>
 
-      {/* Stats row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-        <div className="glass-card" style={{ padding: 16, borderColor: "hsl(142 71% 45% / 0.3)" }}>
-          <p style={{ fontSize: 12, color: "hsl(215 20% 55%)", marginBottom: 4 }}>Pemasukan</p>
-          <p style={{ fontWeight: 700, color: "hsl(142 71% 55%)", fontSize: 18 }}>{formatRupiah(totalIncome)}</p>
+      {/* ── STATS & FILTERS ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginBottom: "24px", flexShrink: 0 }}>
+        
+        {/* Stats Row */}
+        <div className="stats-grid">
+          <div className="glass-card" style={{ padding: "16px 20px", borderRadius: "16px", border: "1px solid var(--color-income-border)", background: "var(--color-income-bg)" }}>
+            <p style={{ fontSize: "12px", color: "var(--color-income)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Pemasukan</p>
+            <p style={{ fontWeight: 900, color: "var(--color-income)", fontSize: "20px", letterSpacing: "-0.02em" }}>{formatRupiah(totalIncome)}</p>
+          </div>
+          <div className="glass-card" style={{ padding: "16px 20px", borderRadius: "16px", border: "1px solid var(--color-expense-border)", background: "var(--color-expense-bg)" }}>
+            <p style={{ fontSize: "12px", color: "var(--color-expense)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Pengeluaran</p>
+            <p style={{ fontWeight: 900, color: "var(--color-expense)", fontSize: "20px", letterSpacing: "-0.02em" }}>{formatRupiah(totalExpense)}</p>
+          </div>
         </div>
-        <div className="glass-card" style={{ padding: 16, borderColor: "hsl(0 72% 51% / 0.3)" }}>
-          <p style={{ fontSize: 12, color: "hsl(215 20% 55%)", marginBottom: 4 }}>Pengeluaran</p>
-          <p style={{ fontWeight: 700, color: "hsl(0 72% 65%)", fontSize: 18 }}>{formatRupiah(totalExpense)}</p>
-        </div>
-      </div>
 
-      {/* Search + Filter */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
-          <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "hsl(215 20% 50%)" }} />
-          <input
-            id="tx-search"
-            className="input-field"
-            placeholder="Cari kategori atau keterangan..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ paddingLeft: 36, fontSize: 14 }}
-          />
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          {(["all", "income", "expense"] as const).map((f) => (
-            <button
-              key={f}
-              id={`filter-${f}`}
-              onClick={() => setFilter(f)}
+        {/* Search & Filter Toolbar */}
+        <div className="toolbar-container">
+          <div style={{ flex: 1, minWidth: "200px", position: "relative" }}>
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <input
+              id="tx-search"
+              placeholder="Cari kategori atau keterangan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               style={{
-                padding: "8px 14px", borderRadius: 8, border: "1px solid",
-                borderColor: filter === f ? "hsl(142 71% 45% / 0.4)" : "hsl(220 20% 22%)",
-                background: filter === f ? "hsl(142 71% 45% / 0.15)" : "transparent",
-                color: filter === f ? "hsl(142 71% 65%)" : "hsl(215 20% 55%)",
-                fontWeight: filter === f ? 600 : 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
-                display: "flex", alignItems: "center", gap: 5,
+                width: "100%", padding: "12px 16px 12px 42px", borderRadius: "100px",
+                border: "1px solid var(--border)", background: "var(--bg-card)",
+                color: "var(--text-primary)", fontSize: "14px", outline: "none",
+                fontFamily: "inherit", transition: "border-color 0.2s"
               }}
-            >
-              <Filter size={13} />
-              {f === "all" ? "Semua" : f === "income" ? "Masuk" : "Keluar"}
-            </button>
-          ))}
+              onFocus={e => e.currentTarget.style.borderColor = "var(--accent)"}
+              onBlur={e => e.currentTarget.style.borderColor = "var(--border)"}
+            />
+          </div>
+          
+          <div style={{ display: "flex", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "100px", padding: "4px" }}>
+            {(["all", "income", "expense"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                style={{
+                  padding: "8px 16px", borderRadius: "100px", border: "none",
+                  background: filter === f ? "var(--bg-card)" : "transparent",
+                  color: filter === f ? "var(--accent)" : "var(--text-secondary)",
+                  fontWeight: filter === f ? 800 : 600, fontSize: "13px", cursor: "pointer", 
+                  fontFamily: "inherit", transition: "all 0.2s",
+                  boxShadow: filter === f ? "0 2px 8px rgba(0,0,0,0.05)" : "none"
+                }}
+              >
+                {f === "all" ? "Semua" : f === "income" ? "Masuk" : "Keluar"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* List */}
-      <div className="glass-card" style={{ overflow: "hidden" }}>
-        {loading ? (
-          <div style={{ padding: 24 }}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
-                <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 10 }} />
-                <div style={{ flex: 1 }}>
-                  <div className="skeleton" style={{ height: 14, width: "55%", marginBottom: 6 }} />
-                  <div className="skeleton" style={{ height: 12, width: "35%" }} />
+      {/* ── LIST AREA (SCROLLABLE) ── */}
+      <div className="glass-card" style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, borderRadius: "24px", overflow: "hidden" }}>
+        
+        <div className="txn-list-container" style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+          {loading ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                  <div className="skeleton" style={{ width: "48px", height: "48px", borderRadius: "14px", flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div className="skeleton" style={{ height: "16px", width: "40%", marginBottom: "8px", borderRadius: "4px" }} />
+                    <div className="skeleton" style={{ height: "12px", width: "25%", borderRadius: "4px" }} />
+                  </div>
+                  <div className="skeleton" style={{ height: "24px", width: "80px", borderRadius: "100px" }} />
                 </div>
-                <div className="skeleton" style={{ height: 18, width: 90 }} />
-              </div>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 24px", color: "hsl(215 20% 50%)" }}>
-            <p style={{ fontSize: 32, marginBottom: 8 }}>🔍</p>
-            <p style={{ fontWeight: 600 }}>Tidak ada transaksi ditemukan</p>
-          </div>
-        ) : (
-          <div>
-            {filtered.map((t, i) => (
-              <div
-                key={t.id}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "14px 20px",
-                  borderBottom: i < filtered.length - 1 ? "1px solid hsl(220 20% 14%)" : "none",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "hsl(220 20% 11%)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-              >
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: t.type === "income" ? "hsl(142 71% 45% / 0.15)" : "hsl(0 72% 51% / 0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {t.type === "income" ? <ArrowUpRight size={18} color="hsl(142 71% 55%)" /> : <ArrowDownRight size={18} color="hsl(0 72% 65%)" />}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 600, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.category}</p>
-                  <p style={{ fontSize: 12, color: "hsl(215 20% 50%)", marginTop: 1 }}>
-                    {t.description ? `${t.description} • ` : ""}{formatDate(t.transaction_date)}
-                  </p>
-                </div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <p style={{ fontWeight: 700, fontSize: 14, color: t.type === "income" ? "hsl(142 71% 55%)" : "hsl(0 72% 65%)" }}>
-                    {t.type === "income" ? "+" : "-"}{formatRupiah(t.amount)}
-                  </p>
-                  <span className={t.type === "income" ? "badge-income" : "badge-expense"} style={{ fontSize: 11 }}>
-                    {t.type === "income" ? "Masuk" : "Keluar"}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleDelete(t.id)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "hsl(215 20% 40%)", padding: 6, borderRadius: 6, flexShrink: 0, transition: "color 0.15s" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "hsl(0 72% 65%)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "hsl(215 20% 40%)")}
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", color: "var(--text-muted)", background: "var(--bg-card)", borderRadius: "16px", border: "1px dashed var(--border)" }}>
+              <Search size={40} style={{ marginBottom: "16px", opacity: 0.5 }} />
+              <p style={{ fontWeight: 800, fontSize: "16px", color: "var(--text-primary)", marginBottom: "4px" }}>Tidak ada transaksi</p>
+              <p style={{ fontSize: "14px", textAlign: "center" }}>Coba ubah kata kunci pencarian atau filter tipe transaksi.</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {filtered.map((t, i) => (
+                <div
+                  key={t.id}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "16px", padding: "16px",
+                    borderBottom: i < filtered.length - 1 ? "1px solid var(--border)" : "1px solid transparent",
+                    transition: "all 0.2s ease", borderRadius: "16px", margin: "0 -8px"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--bg-elevated)";
+                    e.currentTarget.style.borderColor = "transparent";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.borderColor = i < filtered.length - 1 ? "var(--border)" : "transparent";
+                  }}
                 >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+                  {/* Category icon */}
+                  <div style={{ 
+                    width: "48px", height: "48px", borderRadius: "14px", 
+                    background: t.type === "income" ? "var(--color-income-bg)" : "var(--color-expense-bg)", 
+                    border: `1px solid ${t.type === "income" ? "var(--color-income-border)" : "var(--color-expense-border)"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    fontSize: "22px", boxShadow: "var(--shadow-card)"
+                  }}>
+                    {getCategoryEmoji(t.category)}
+                  </div>
+                  
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 800, fontSize: "15px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--text-primary)", marginBottom: "4px" }}>
+                      {t.category}
+                    </p>
+                    <p style={{ fontSize: "13px", color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: 500 }}>
+                      {t.description ? `${t.description} • ` : ""}{formatDate(t.transaction_date)}
+                    </p>
+                  </div>
+
+                  {/* Amount & Action */}
+                  <div style={{ textAlign: "right", flexShrink: 0, display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                      <p style={{ fontWeight: 900, fontSize: "16px", color: t.type === "income" ? "var(--color-income)" : "var(--color-expense)", marginBottom: "6px" }}>
+                        {t.type === "income" ? "+" : "-"}{formatRupiah(t.amount)}
+                      </p>
+                      <div style={{
+                        display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "100px",
+                        fontSize: "10px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase",
+                        background: t.type === "income" ? "var(--color-income-bg)" : "var(--color-expense-bg)",
+                        color: t.type === "income" ? "var(--color-income)" : "var(--color-expense)",
+                        border: `1px solid ${t.type === "income" ? "var(--color-income-border)" : "var(--color-expense-border)"}`
+                      }}>
+                        {t.type === "income" ? <ArrowUpRight size={12} strokeWidth={3} /> : <ArrowDownRight size={12} strokeWidth={3} />}
+                        {t.type === "income" ? "Masuk" : "Keluar"}
+                      </div>
+                    </div>
+                    
+                    {/* Delete Btn */}
+                    <button
+                      onClick={() => handleDelete(t.id)}
+                      style={{ 
+                        background: "var(--bg-card)", border: "1px solid var(--border)", cursor: "pointer", 
+                        color: "var(--text-muted)", width: "36px", height: "36px", borderRadius: "10px", 
+                        display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s ease" 
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.color = "var(--color-danger)"; e.currentTarget.style.background = "var(--color-expense-bg)"; e.currentTarget.style.borderColor = "var(--color-expense-border)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.background = "var(--bg-card)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+                      title="Hapus transaksi"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* ── RESPONSIVE CSS ── */}
+      <style>{`
+        .stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+        .toolbar-container {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+
+        /* Custom Scrollbar */
+        .txn-list-container::-webkit-scrollbar {
+          width: 8px;
+        }
+        .txn-list-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .txn-list-container::-webkit-scrollbar-thumb {
+          background-color: var(--border);
+          border-radius: 10px;
+        }
+        .txn-list-container::-webkit-scrollbar-thumb:hover {
+          background-color: var(--text-muted);
+        }
+
+        /* Mobile */
+        @media (max-width: 480px) {
+          .stats-grid {
+            gap: 12px;
+          }
+          .toolbar-container {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

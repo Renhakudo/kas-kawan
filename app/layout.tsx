@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   keywords: ["keuangan UMKM", "kas kawan", "aplikasi keuangan", "scan struk"],
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -23,9 +29,9 @@ export default function RootLayout({
           theme="dark"
           toastOptions={{
             style: {
-              background: "hsl(220 20% 13%)",
-              border: "1px solid hsl(220 20% 22%)",
-              color: "hsl(210 40% 96%)",
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-light)",
+              color: "var(--text-primary)",
             },
           }}
         />
