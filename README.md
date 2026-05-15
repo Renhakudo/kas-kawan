@@ -1,4 +1,4 @@
-# 💸 KasKawan Enterprise
+# 💸 Kas Kawan Enterprise
 
 **KasKawan** adalah aplikasi *Software as a Service* (SaaS) manajemen keuangan tingkat *Enterprise* yang dirancang khusus untuk membantu UMKM (Usaha Mikro, Kecil, dan Menengah) dalam mencatat, memantau, dan menganalisis arus kas mereka dengan sangat mudah. 
 
@@ -53,7 +53,7 @@ Ikuti langkah-langkah di bawah ini untuk menjalankan KasKawan di mesin lokal And
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/username/kaskawan.git
+git clone https://github.com/Renhakudo/kas-kawan.git
 cd kaskawan
 ```
 
@@ -72,6 +72,7 @@ Buat file `.env.local` di *root directory* proyek Anda dan masukkan kredensial S
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://[YOUR_PROJECT_ID].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
+GEMINI_API_KEY=[YOUR_GEMINI_API_KEY]
 ```
 
 ### 4. Setup Database (Supabase Migrations)
@@ -106,6 +107,9 @@ Aplikasi ini dibangun dengan pendekatan *Mobile-First*.
 - **Di Desktop:** Tampilan terbagi dalam *Grid* yang luas, *Sidebar Navigation* yang statis, dan layout *Bento Box*.
 - **Di Layar Mobile:** Navigasi berubah menjadi menu *Hamburger* (*Drawer*), *Global Wallet Switcher* terintegrasi rapi di *header* atas, dan semua form serta tabel beradaptasi agar tidak rusak (*no horizontal scroll*).
 
+by :
+1. Mochamad Danu Syarifudin
+2. Muhammad Hilmi Mu'afa
 ---
 
 ## 🤝 Kontribusi
